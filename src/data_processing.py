@@ -174,9 +174,10 @@ def plot_correlation(df):
 
 if __name__ == "__main__":
   try:
-    df_clean = clean_car_data()
-    plot_correlation(df_clean)
-    stats = get_data_stats(df_clean)
+    data = clean_car_data()
+    data.info()
+    plot_correlation(data)
+    stats = get_data_stats(data)
     print_stats(stats)
   except FileNotFoundError as e:
     print(f"Erreur: {str(e)}")
