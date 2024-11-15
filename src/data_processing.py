@@ -58,6 +58,40 @@ def clean_date(date_str):
     except ValueError:
         return np.nan
 
+def extract_brand(carmodel):
+    """
+    Extrait et valide la marque du modèle de voiture.
+    Retourne la marque si le format est valide (marque + autres infos),
+    sinon retourne None ou lève une exception.
+    """
+    if pd.isna(carmodel):
+        return None
+        
+    parts = str(carmodel).split()
+    
+    # Vérifier qu'il y a au moins 2 parties (marque + infos supplémentaires)
+    if len(parts) < 2:
+        return None  # ou raise ValueError(f"Format invalide pour {carmodel}")
+        
+    return parts[0]
+
+def extract_model(carmodel):
+    """
+    Extrait la marque et le modèle d'une chaîne de caractères.
+    Retourne un tuple (marque, modèle).
+    """
+    if pd.isna(carmodel):
+        return None
+        
+    parts = str(carmodel).split()
+    
+    if len(parts) < 2:
+        return None
+        
+    model = ' '.join(parts[1:])  # Tout ce qui suit la marque
+    
+    return model
+
 def clean_car_data(data_path='data/dataset.csv'):
     # Vérification de l'existence du fichier
     if not Path(data_path).exists():
@@ -98,9 +132,24 @@ def clean_car_data(data_path='data/dataset.csv'):
     for col in categorical_cols:
         df[col] = df[col].astype('category')
     
-    # Extraire la marque du modèle
-    df['marque'] = df['carmodel'].str.split().str[0]
+    # Extraire la marque
+    df['marque'] = df['carmodel'].apply(extract_brand)
     
+    # Vérifier les lignes où la marque n'a pas pu être extraite
+    invalid_marque = df[df['marque'].isna()]['carmodel']
+    if not invalid_marque.empty:
+      print("\nModèles invalide:")
+      print(invalid_marque)
+
+    # Extraire le modèle
+    df['model'] = df['carmodel'].apply(extract_model)
+
+    # Vérifier les lignes où la marque n'a pas pu être extraite
+    invalid_models = df[df['model'].isna()]['carmodel']
+    if not invalid_models.empty:
+      print("\nMarques invalide:")
+      print(invalid_models)
+        
     # Nettoyer les valeurs booléennes
     bool_cols = ['premièremain(déclaratif)', 'vérifié&garanti', 'rechargeable']
     for col in bool_cols:
@@ -140,6 +189,7 @@ def get_data_stats(df):
     'km_moyen': df['kilométragecompteur'].mean(),
     'age_moyen': df['age_vehicule'].mean(),
     'marques_populaires': df['marque'].value_counts().head(),
+    'model_populaires': df['model'].value_counts().head(),
     'energies_populaires': df['énergie'].value_counts(),
     'correlation_prix_km': float(df['price'].corr(df['kilométragecompteur']))
   }
@@ -157,6 +207,10 @@ def print_stats(stats):
     print("\nMarques les plus représentées:")
     for marque, count in stats['marques_populaires'].items():
         print(f"  - {marque}: {count}")
+        
+    print("\nModèles les plus représentés:")
+    for model, count in stats['model_populaires'].items():
+        print(f"  - {model}: {count}")
     
     print("\nTypes d'énergie:")
     for energie, count in stats['energies_populaires'].items():

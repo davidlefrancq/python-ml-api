@@ -16,6 +16,7 @@ distribution = false
 
 [tool.pdm.scripts]
 start = "python src/main.py"
+data = "python src/data_processing.py"
 dev = "docker-compose up -d --build"
 devStop = "docker-compose down ml-app"
 devLog = "docker-compose logs -f"
